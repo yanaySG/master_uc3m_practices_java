@@ -1,0 +1,12 @@
+<transaction>
+    <issuer> Fernando Perez </issuer>
+    <issuerBank> BCHESXXX </issuerBank>
+    <issuerAccount> ES0320008463760200388290 </issuerAccount>
+    <receiver> Wilson Gonzalez </receiver>
+    <receiverBank> BCHESXXX </receiverBank>
+    <receiverAccount> ES0320008463730200388291 </receiverAccount>
+    <description> Pago entradas concierto </description>
+    <amount> 300.00 </amount>
+    <currency> EUR </currency>
+    <time> 24/01/2019 08:00:05 GMT+1 CET </time>
+</transaction>
