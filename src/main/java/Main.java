@@ -13,7 +13,7 @@ import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
 public class Main {
-/*
+
     static String AES = "AES";
     static String AESCBCPKCS7 = "AES/CBC/PKCS7Padding";
     static String SHA2 = "SHA-256";
@@ -21,143 +21,143 @@ public class Main {
     static int KEYLENGTH = 16;
 
     private static final SecureRandom random = new SecureRandom();
-
-    private static void printMaxKey(){
-        int maxKeySize = 0;
-        try {
-            maxKeySize = javax.crypto.Cipher.getMaxAllowedKeyLength("AES");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        System.out.printf("**** AES:%d bits *****\n",maxKeySize);
-    }
-
-    private static X509Certificate loadCertificates(){
-        try {
-
-            CertificateFactory certFactory = CertificateFactory.getInstance("X.509", "BC");
-            ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-            return  (X509Certificate) certFactory.generateCertificate(classloader.getResourceAsStream("baeldung.cer"));
-        }
-        catch(Exception e ){
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-
-    private static PrivateKey loadPrivateKey(){
-        try {
-            char[] keystorePassword = "password".toCharArray();
-            char[] keyPassword = "password".toCharArray();
-
-            KeyStore keystore = KeyStore.getInstance("PKCS12");
-            ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-            keystore.load(classloader.getResourceAsStream("baeldung.p12"), keystorePassword);
-            return (PrivateKey) keystore.getKey("baeldung", keyPassword);
-        }
-        catch(Exception e ){
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    public static String readFile(String filename){
-
-        StringBuilder sb = new StringBuilder();
-
-        try{
-                BufferedReader br = new BufferedReader(new FileReader(filename));
-
-                // read line by line
-                String line;
-                while ((line = br.readLine()) != null) {
-                    sb.append(line).append("\n");
-                }
-
-
-        } catch (Exception e) {
-            System.err.format("IOException: %s%n", e);
+    /*
+        private static void printMaxKey(){
+            int maxKeySize = 0;
+            try {
+                maxKeySize = javax.crypto.MyCipher.getMaxAllowedKeyLength("AES");
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            }
+            System.out.printf("**** AES:%d bits *****\n",maxKeySize);
         }
 
-        return sb.toString();
-    }
+        private static X509Certificate loadCertificates(){
+            try {
 
-    private static SecretKeySpec generateKey() {
-        byte[] keyBytes = new byte[KEYLENGTH];
-        random.nextBytes(keyBytes);
-        return new SecretKeySpec(keyBytes, "AES");
-    }
+                CertificateFactory certFactory = CertificateFactory.getInstance("X.509", "BC");
+                ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+                return  (X509Certificate) certFactory.generateCertificate(classloader.getResourceAsStream("baeldung.cer"));
+            }
+            catch(Exception e ){
+                e.printStackTrace();
+                return null;
+            }
+        }
 
-    public static byte[] toByte(String input){
-        return input.getBytes();
-    }
 
-    public static byte[] getSHA2Byte(String text) throws Exception{
-        if(text==null || text.length()<=0)
-            return null;
-        MessageDigest digest = MessageDigest.getInstance(SHA2);
-        return digest.digest(text.getBytes(StandardCharsets.UTF_8));
-    }
+        private static PrivateKey loadPrivateKey(){
+            try {
+                char[] keystorePassword = "password".toCharArray();
+                char[] keyPassword = "password".toCharArray();
 
-    public static String getSHA2Hex(String text) throws Exception{
-        if(text==null || text.length()<=0)
-            return null;
-        return new String(Hex.encode(getSHA2Byte(text)));
-    }
+                KeyStore keystore = KeyStore.getInstance("PKCS12");
+                ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+                keystore.load(classloader.getResourceAsStream("baeldung.p12"), keystorePassword);
+                return (PrivateKey) keystore.getKey("baeldung", keyPassword);
+            }
+            catch(Exception e ){
+                e.printStackTrace();
+                return null;
+            }
+        }
 
-    public static SecretKeySpec generateKeyWithPassword(String password) throws Exception{
-//        final MessageDigest digest = MessageDigest.getInstance(SHA2);
-//        byte[] bytes = password.getBytes(StandardCharsets.UTF_8);
-//        digest.update(bytes,0,bytes.length);
-//        byte[] key = digest.digest();
+        public static String readFile(String filename){
 
-        if(password==null || password.length()<=0)
-            return null;
-        return new SecretKeySpec(getSHA2Byte(password),AES);
-    }
+            StringBuilder sb = new StringBuilder();
 
-    public static String encrypt(String encString) throws Exception{
+            try{
+                    BufferedReader br = new BufferedReader(new FileReader(filename));
 
-        Cipher cipher = Cipher.getInstance(AES);
-        cipher.init(Cipher.ENCRYPT_MODE, key);
-        byte[] encVal = cipher.doFinal(encString.getBytes());
-        System.out.println(encVal.toString());
-        System.out.println("*****************************");
-        final String encryptedVal = Base64.encode(encVal, Base64.BASE64DEFAULTLENGTH);
-        return encryptedVal;
-    }
+                    // read line by line
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        sb.append(line).append("\n");
+                    }
 
-    public static String encrypt2(String encString) throws Exception {
 
-        Cipher cipher = Cipher.getInstance(AES);
-        byte[] iv = "0123456789abcdef".getBytes(StandardCharsets.US_ASCII);
-        cipher.init(Cipher.ENCRYPT_MODE, key);
-        byte[] encVal = cipher.doFinal(encString.getBytes());
-        System.out.println(encVal.toString());
-        System.out.println("*****************************");
-        final String decString = new String(encVal);
-        return decString;
-    }
+            } catch (Exception e) {
+                System.err.format("IOException: %s%n", e);
+            }
 
-    public static String decrypt(String decString) throws Exception{
-        Cipher cipher = Cipher.getInstance(AES);
-        cipher.init(Cipher.DECRYPT_MODE, key);
+            return sb.toString();
+        }
+    */
+        private static SecretKeySpec generateKey() {
+            byte[] keyBytes = new byte[KEYLENGTH];
+            random.nextBytes(keyBytes);
+            return new SecretKeySpec(keyBytes, "AES");
+        }
+    /*
+        public static byte[] toByte(String input){
+            return input.getBytes();
+        }
 
-        byte[] dec = Base64.decode(decString);
-        byte[] decVal = cipher.doFinal(dec);
-        final String decryptedVal = new String(decVal);
-        return decryptedVal;
-    }
+        public static byte[] getSHA2Byte(String text) throws Exception{
+            if(text==null || text.length()<=0)
+                return null;
+            MessageDigest digest = MessageDigest.getInstance(SHA2);
+            return digest.digest(text.getBytes(StandardCharsets.UTF_8));
+        }
 
-    public static String decrypt2(String decString) throws Exception{
-        Cipher cipher = Cipher.getInstance(AES);
-        byte[] iv = "0123456789abcdef".getBytes(StandardCharsets.US_ASCII);
-        cipher.init(Cipher.DECRYPT_MODE, key);
-        byte[] decval = cipher.doFinal(decString.getBytes());
-        return new String(decval);
-    }
-*/
+        public static String getSHA2Hex(String text) throws Exception{
+            if(text==null || text.length()<=0)
+                return null;
+            return new String(Hex.encode(getSHA2Byte(text)));
+        }
+
+        public static SecretKeySpec generateKeyWithPassword(String password) throws Exception{
+    //        final MessageDigest digest = MessageDigest.getInstance(SHA2);
+    //        byte[] bytes = password.getBytes(StandardCharsets.UTF_8);
+    //        digest.update(bytes,0,bytes.length);
+    //        byte[] key = digest.digest();
+
+            if(password==null || password.length()<=0)
+                return null;
+            return new SecretKeySpec(getSHA2Byte(password),AES);
+        }
+
+        public static String encrypt(String encString) throws Exception{
+
+            MyCipher cipher = MyCipher.getInstance(AES);
+            cipher.init(MyCipher.ENCRYPT_MODE, key);
+            byte[] encVal = cipher.doFinal(encString.getBytes());
+            System.out.println(encVal.toString());
+            System.out.println("*****************************");
+            final String encryptedVal = Base64.encode(encVal, Base64.BASE64DEFAULTLENGTH);
+            return encryptedVal;
+        }
+
+        public static String encrypt2(String encString) throws Exception {
+
+            MyCipher cipher = MyCipher.getInstance(AES);
+            byte[] iv = "0123456789abcdef".getBytes(StandardCharsets.US_ASCII);
+            cipher.init(MyCipher.ENCRYPT_MODE, key);
+            byte[] encVal = cipher.doFinal(encString.getBytes());
+            System.out.println(encVal.toString());
+            System.out.println("*****************************");
+            final String decString = new String(encVal);
+            return decString;
+        }
+
+        public static String decrypt(String decString) throws Exception{
+            MyCipher cipher = MyCipher.getInstance(AES);
+            cipher.init(MyCipher.DECRYPT_MODE, key);
+
+            byte[] dec = Base64.decode(decString);
+            byte[] decVal = cipher.doFinal(dec);
+            final String decryptedVal = new String(decVal);
+            return decryptedVal;
+        }
+
+        public static String decrypt2(String decString) throws Exception{
+            MyCipher cipher = MyCipher.getInstance(AES);
+            byte[] iv = "0123456789abcdef".getBytes(StandardCharsets.US_ASCII);
+            cipher.init(MyCipher.DECRYPT_MODE, key);
+            byte[] decval = cipher.doFinal(decString.getBytes());
+            return new String(decval);
+        }
+    */
     public static void main(String[] args) {
         Security.addProvider(new BouncyCastleProvider());
 
