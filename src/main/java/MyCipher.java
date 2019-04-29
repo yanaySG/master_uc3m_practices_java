@@ -12,6 +12,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.security.*;
+import java.util.Base64;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class MyCipher {
 
@@ -86,6 +90,55 @@ public class MyCipher {
         return file.getName().replace(oldExtension,newExtension);
     }
 
+    public static String getFileChecksum(File file) throws IOException, NoSuchAlgorithmException {
+        FileInputStream inputStream = new FileInputStream(file);
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+
+        byte[] byteArray = new byte[(int)file.length()];
+        int bytesCount;
+
+        while ((bytesCount = inputStream.read(byteArray))!= -1){
+            digest.update(byteArray,0,bytesCount);
+        }
+
+        inputStream.close();
+
+        byte[] bytes = digest.digest();
+
+        StringBuilder sb = new StringBuilder();
+        for (byte aByte : bytes) sb.append(Integer.toString((aByte & 0xFF) + 0X100, 16).substring(1));
+
+        return sb.toString();
+    }
+
+    public static String Sign(byte[] bytes, PrivateKey key) throws Exception{
+
+        Signature privateSignature = Signature.getInstance("SHA256WithRSA");
+        privateSignature.initSign(key);
+        privateSignature.update(bytes);
+
+        byte[] sign = privateSignature.sign();
+
+        return Base64.getEncoder().encodeToString(sign);
+    }
+
+    public static boolean Verify(byte[] bytes, String signature, PublicKey key) throws Exception{
+
+        Signature publicSignature = Signature.getInstance("SHA256WithRSA");
+        publicSignature.initVerify(key);
+        publicSignature.update(bytes);
+
+        byte[] signatureBytes = Base64.getDecoder().decode(signature);
+        return publicSignature.verify(signatureBytes);
+    }
+
+    public static KeyPair generateKeyPair() throws Exception {
+        KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
+        generator.initialize(2048,new java.security.SecureRandom());
+        KeyPair pair = generator.generateKeyPair();
+
+        return pair;
+    }
 
     public static SecretKeySpec generateKey() {
         final SecureRandom random = new SecureRandom();
@@ -93,5 +146,6 @@ public class MyCipher {
         random.engineNextBytes(keyBytes);
         return new SecretKeySpec(keyBytes, "AES");
     }
+
 
 }
