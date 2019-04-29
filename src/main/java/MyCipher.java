@@ -1,3 +1,8 @@
+import org.bouncycastle.cms.*;
+import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
+import org.bouncycastle.cms.jcajce.JceKeyTransEnvelopedRecipient;
+import org.bouncycastle.cms.jcajce.JceKeyTransRecipient;
+import org.bouncycastle.cms.jcajce.JceKeyTransRecipientInfoGenerator;
 import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.crypto.InvalidCipherTextException;
@@ -5,6 +10,7 @@ import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.modes.CBCBlockCipher;
 import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.operator.OutputEncryptor;
 import sun.security.provider.SecureRandom;
 
 import javax.crypto.spec.SecretKeySpec;
@@ -13,35 +19,41 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.security.*;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collection;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class MyCipher {
 
-    static BlockCipher engine = new AESEngine();
+    static int INPUT_LENGTH = 1024;
+    static int OUTPUT_LENGTH = 1024;
     static int KEY_LENGTH = 16;
     static String DEFAULT_KEY = "ASDFGHJKLASDFGHJ";
 
 
     public static byte[] Encrypt(byte[] plainText, String key) throws InvalidCipherTextException {
 
-        BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(engine));
+        BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESEngine()));
         cipher.init(true,new KeyParameter(key.getBytes()));
         byte[] rv = new byte[cipher.getOutputSize(plainText.length)];
         int tam = cipher.processBytes(plainText, 0, plainText.length, rv, 0);
         cipher.doFinal(rv, tam);
+        INPUT_LENGTH  = rv.length;
         return rv;
     }
 
     public static byte[] Decrypt(byte[] cipherText,String key) throws InvalidCipherTextException{
 
-        BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(engine));
+        BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESEngine()));
         cipher.init(false, new KeyParameter(key.getBytes()));
         byte[] rv = new byte[cipher.getOutputSize(cipherText.length)];
         int tam = cipher.processBytes(cipherText, 0, cipherText.length, rv, 0);
         cipher.doFinal(rv, tam);
-
+        OUTPUT_LENGTH  = rv.length;
         return rv;
     }
 
@@ -145,6 +157,35 @@ public class MyCipher {
         byte[] keyBytes = new byte[KEY_LENGTH];
         random.engineNextBytes(keyBytes);
         return new SecretKeySpec(keyBytes, "AES");
+    }
+
+    public static byte[] encryptWithCertX509(byte[] data, X509Certificate encryptionCertificate) throws CertificateEncodingException, CMSException, IOException {
+
+        byte[] encryptedData = null;
+            if (null != data && null != encryptionCertificate) {
+                CMSEnvelopedDataGenerator cmsEnvelopedDataGenerator = new CMSEnvelopedDataGenerator();
+                JceKeyTransRecipientInfoGenerator jceKey = new JceKeyTransRecipientInfoGenerator(encryptionCertificate);
+                cmsEnvelopedDataGenerator.addRecipientInfoGenerator(jceKey);
+                CMSTypedData msg = new CMSProcessableByteArray(data);
+                OutputEncryptor encryptor = new JceCMSContentEncryptorBuilder(CMSAlgorithm.AES128_CBC).setProvider("BC").build();
+                CMSEnvelopedData cmsEnvelopedData = cmsEnvelopedDataGenerator.generate(msg,encryptor);
+                encryptedData = cmsEnvelopedData.getEncoded();
+            }
+        return encryptedData;
+    }
+
+    public static byte[] decryptWithCertX509(byte[] encryptedData, PrivateKey decryptionKey) throws CMSException {
+
+        if (null != encryptedData && null != decryptionKey) {
+            CMSEnvelopedData envelopedData = new CMSEnvelopedData(encryptedData);
+
+            Collection<RecipientInformation> recipients = envelopedData.getRecipientInfos().getRecipients();
+            KeyTransRecipientInformation recipientInfo = (KeyTransRecipientInformation) recipients.iterator().next();
+            JceKeyTransRecipient recipient = new JceKeyTransEnvelopedRecipient(decryptionKey);
+
+            return recipientInfo.getContent(recipient);
+        }
+        return null;
     }
 
 
