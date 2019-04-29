@@ -1,44 +1,21 @@
-
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.KeyPair;
-import java.security.KeyStore;
-import java.security.PrivateKey;
-import java.security.Security;
-import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
-import java.util.Arrays;
-
-import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class MyCipherTest {
     private static final File file = new File("transaction.xml");
     private static final File file_ref = new File("transaction_ref.xml");
     private static final File file_enc = new File("transaction.encrypted");
     private static final String key = "MYSECUREPASSWORD";
-    private static PrivateKey privateKey ;
-    private static X509Certificate certificate;
+
 
     @Before
-    public void setUp() throws Exception {
-        Security.addProvider(new BouncyCastleProvider());
-        CertificateFactory certFactory= CertificateFactory
-                .getInstance("X.509", "BC");
-
-        certificate = (X509Certificate) certFactory.generateCertificate(new FileInputStream("Baeldung.cer"));
-
-        char[] keystorePassword = "password".toCharArray();
-        char[] keyPassword = "password".toCharArray();
-
-        KeyStore keystore = KeyStore.getInstance("PKCS12");
-        keystore.load(new FileInputStream("Baeldung.p12"), keystorePassword);
-        privateKey = (PrivateKey) keystore.getKey("baeldung", keyPassword);
+    public void setUp()  {
+       MyCipher.Init();
     }
 
     @Test
@@ -55,7 +32,7 @@ public class MyCipherTest {
     public void testEncryptDecryptFile() throws Exception{
         String sha_raw = MyCipher.getFileChecksum(file);
         MyCipher.encryptFile(file,key);
-        String sha_encrypted = MyCipher.getFileChecksum(file_enc);
+
         MyCipher.decryptFile(file_enc,key);
         String sha_decrypted = MyCipher.getFileChecksum(file);
 
@@ -72,7 +49,6 @@ public class MyCipherTest {
         byte[] raw_data = MyCipher.readFile(file_ref);
         byte[] encrypted = MyCipher.Encrypt(raw_data,key);
         byte[] decrypted = MyCipher.Decrypt(encrypted,key);
-      //  decrypted = Arrays.copyOfRange(decrypted, 0, raw_data.length);
         Assert.assertArrayEquals(raw_data,decrypted);
     }
 
@@ -95,14 +71,10 @@ public class MyCipherTest {
 
     @Test
     public void testEncryptDecryptWithCertX509() throws Exception{
-        String MESSAGE = "My password is secure";
-        byte[] stringToEncrypt = MESSAGE.getBytes();
-        byte[] encryptedData = MyCipher.encryptWithCertX509(stringToEncrypt, certificate);
-        byte[] rawData = MyCipher.decryptWithCertX509(encryptedData, privateKey);
-        String decryptedMessage = new String(rawData);
+        byte[] rawdata = MyCipher.readFile(file);
+        byte[] encryptedData = MyCipher.encryptWithCertX509(rawdata, MyCipher.certificate);
+        byte[] decryptedData = MyCipher.decryptWithCertX509(encryptedData, MyCipher.privateKey);
 
-        Assert.assertArrayEquals(MESSAGE.getBytes(),rawData);
-        Assert.assertEquals(stringToEncrypt.length,rawData.length);
-        Assert.assertEquals(MESSAGE,decryptedMessage);
+        Assert.assertArrayEquals(rawdata,decryptedData);
     }
 }

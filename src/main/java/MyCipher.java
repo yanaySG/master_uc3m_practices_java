@@ -3,46 +3,74 @@ import org.bouncycastle.cms.jcajce.JceCMSContentEncryptorBuilder;
 import org.bouncycastle.cms.jcajce.JceKeyTransEnvelopedRecipient;
 import org.bouncycastle.cms.jcajce.JceKeyTransRecipient;
 import org.bouncycastle.cms.jcajce.JceKeyTransRecipientInfoGenerator;
-import org.bouncycastle.crypto.BlockCipher;
 import org.bouncycastle.crypto.BufferedBlockCipher;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.engines.AESEngine;
 import org.bouncycastle.crypto.modes.CBCBlockCipher;
 import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.bouncycastle.crypto.params.KeyParameter;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.operator.OutputEncryptor;
 import sun.security.provider.SecureRandom;
 
 import javax.crypto.spec.SecretKeySpec;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.security.*;
 import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 public class MyCipher {
 
     static int INPUT_LENGTH = 1024;
-    static int OUTPUT_LENGTH = 1024;
     static int KEY_LENGTH = 16;
     static String DEFAULT_KEY = "ASDFGHJKLASDFGHJ";
+
+    public static PrivateKey privateKey ;
+    public static X509Certificate certificate;
+
+
+    public static void Init()  {
+        Security.addProvider(new BouncyCastleProvider());
+
+        try {
+            loadCertificate();
+            loadKeyStore();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
+    public static void loadCertificate() throws NoSuchProviderException,CertificateException,IOException{
+        CertificateFactory certFactory= CertificateFactory.getInstance("X.509", "BC");
+        certificate = (X509Certificate) certFactory.generateCertificate(new FileInputStream("Baeldung.cer"));
+    }
+
+    public static void loadKeyStore() throws KeyStoreException, IOException, NoSuchAlgorithmException,UnrecoverableKeyException, CertificateException{
+        char[] keystorePassword = "password".toCharArray();
+        char[] keyPassword = "password".toCharArray();
+
+        KeyStore keystore = KeyStore.getInstance("PKCS12");
+        keystore.load(new FileInputStream("Baeldung.p12"), keystorePassword);
+        privateKey = (PrivateKey) keystore.getKey("baeldung", keyPassword);
+    }
+
 
 
     public static byte[] Encrypt(byte[] plainText, String key) throws InvalidCipherTextException {
 
+        INPUT_LENGTH  = plainText.length;
         BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESEngine()));
         cipher.init(true,new KeyParameter(key.getBytes()));
         byte[] rv = new byte[cipher.getOutputSize(plainText.length)];
         int tam = cipher.processBytes(plainText, 0, plainText.length, rv, 0);
         cipher.doFinal(rv, tam);
-        INPUT_LENGTH  = rv.length;
         return rv;
     }
 
@@ -53,7 +81,7 @@ public class MyCipher {
         byte[] rv = new byte[cipher.getOutputSize(cipherText.length)];
         int tam = cipher.processBytes(cipherText, 0, cipherText.length, rv, 0);
         cipher.doFinal(rv, tam);
-        OUTPUT_LENGTH  = rv.length;
+        rv = Arrays.copyOfRange(rv, 0, INPUT_LENGTH);
         return rv;
     }
 
@@ -79,6 +107,7 @@ public class MyCipher {
     private static String getKey(String key) {
        return (key!=null && key.length()>0)?key:DEFAULT_KEY;
     }
+
 
     public static byte[] readFile(File file) throws IOException {
         FileInputStream inputStream = new FileInputStream(file);
