@@ -93,7 +93,7 @@ public class MyCipher {
         byte[] decrypteddata  = Decrypt(encrypteddata,key);
         final String decryptedVal = new String(decrypteddata);
         System.out.println(decryptedVal);
-        return writeFile(file,decrypteddata,".encrypted",".xml");
+        return writeFile(file,decrypteddata,".cpt",".xml");
     }
 
     public static int encryptFile(File file, String key) throws IOException, InvalidCipherTextException{
@@ -101,7 +101,7 @@ public class MyCipher {
             return -1;
 
         byte[] encrypteddata = Encrypt(readFile(file),getKey(key));
-        return writeFile(file,encrypteddata,".xml",".encrypted");
+        return writeFile(file,encrypteddata,".xml",".cpt");
     }
 
     private static String getKey(String key) {
