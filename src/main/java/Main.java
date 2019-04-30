@@ -4,51 +4,58 @@ import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.nio.channels.ByteChannel;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+
 
 public class Main {
+    public enum MODE {
+        se,sd,hf,hv,ae,ad,cc
+    }
 
-    public static void main(String[] args) {
-        ArgumentParser parser = ArgumentParsers.newFor("cypher").build()
-                .defaultHelp(true)
-                .description("Cypher is a library to perform cryptographic operations, such as symmetric and asymmetric" +
-                        " encryption/decryption, file hashing, creation of certificates among others. " +
-                        "\n Select the operation mode (-m) and the input file to operate on (-f) and choose a password (-p) and/or " +
-                        " and output file (-o) with the results of the procedure.");
+    static String infile = "transaction.xml";
+    static String outfile = "transaction.cpt";
 
-        parser.addArgument("-m","--mode").required(true)
-                .choices("se", "sd", "hf", "hv", "ae", "ad", "cc").setDefault("cs")
-                .help("Select the crypto operation to perform " +
-                        "\n se - Symmetric encryption " +
-                        "\n sd - Symmetric decryption " +
-                        "\n hf - Hash function " +
-                        "\n hv - Hash verification" +
-                        "\n ae - Asymmetric encryption " +
-                        "\n ad - Asymmetric decryption " +
-                        "\n cc - Certificate creation ");
-        parser.addArgument("-p","-password").type(String.class)
-                .help("Password/key/passphrase.");
-        parser.addArgument("-i", "-infile").type(File.class).required(true).metavar("FILE")
-                .help("Input file ");
-        parser.addArgument("-o", "-outfile").type(File.class).metavar("FILE")
-                .help("Output file.");
+    public static void main(String[] args) throws Exception{
 
 
-        Namespace ns = null;
-        try {
-            ns = parser.parseArgs(args);
-        } catch (ArgumentParserException e) {
-            parser.handleError(e);
-            System.exit(1);
+        ArgumentParser parser = initArgParserHelper();
+        Namespace ns = processArgs(args,parser);
+
+        String mode = ns.getString("mode");
+
+        infile = ns.getString("infile");
+        outfile = ns.getString("outfile");
+
+        switch( MODE.valueOf( mode ) ) {
+            case se:
+                System.out.println( "## Symmetric encryption" );
+                MyCipher.EncryptFile(new File(infile),ns.getString("password"),outfile);
+                break;
+            case sd:
+                System.out.println( "## Symmetric decryption" );
+                MyCipher.DecryptFile(new File(infile),ns.getString("password"),outfile);
+                break;
+            case hf:
+                System.out.println( "## Hash function" );
+                break;
+            case hv:
+                System.out.println( "## Hash verification" );
+                break;
+            case ae:
+                System.out.println( "## Asymmetric encryption" );
+                break;
+            case ad:
+                System.out.println( "## Asymmetric decryption" );
+                break;
+            case cc:
+                System.out.println( "## Certificate creation" );
+                break;
+            default:
+                System.err.println( "## Illegal mode parameter" );
+                break;
         }
+
+
+/*
         MessageDigest digest = null;
         try {
             digest = MessageDigest.getInstance(ns.getString("type"));
@@ -83,6 +90,48 @@ public class Main {
             }
             System.out.printf("%s  %s\n", sb.toString(), name);
         }
+        */
+    }
+
+    private static Namespace processArgs(String[] args,ArgumentParser parser) {
+
+
+        Namespace ns = null;
+        try {
+            ns = parser.parseArgs(args);
+        } catch (ArgumentParserException e) {
+            parser.handleError(e);
+            System.exit(1);
+        }
+
+        return ns;
+    }
+
+    private static ArgumentParser initArgParserHelper() {
+        ArgumentParser parser = ArgumentParsers.newFor("cypher").build()
+                .defaultHelp(true)
+                .description("Cypher is a library to perform cryptographic operations, such as symmetric and asymmetric" +
+                        " encryption/decryption, file hashing, creation of certificates among others. " +
+                        "\n Select the operation mode (-m) and the input file to operate on (-f) and choose a password (-p) and/or " +
+                        " and output file (-o) with the results of the procedure.");
+
+        parser.addArgument("-m","--mode").required(true)
+                .choices("se", "sd", "hf", "hv", "ae", "ad", "cc").setDefault("cs")
+                .help("Select the crypto operation to perform " +
+                        "\n se - Symmetric encryption " +
+                        "\n sd - Symmetric decryption " +
+                        "\n hf - Hash function " +
+                        "\n hv - Hash verification" +
+                        "\n ae - Asymmetric encryption " +
+                        "\n ad - Asymmetric decryption " +
+                        "\n cc - Certificate creation ");
+        parser.addArgument("-p","-password").type(String.class)
+                .help("Password/key/passphrase.");
+        parser.addArgument("-i", "-infile").type(File.class).required(true).metavar("FILE")
+                .help("Input file ");
+        parser.addArgument("-o", "-outfile").type(File.class).metavar("FILE")
+                .help("Output file.");
+        return parser;
     }
 
 }
@@ -122,6 +171,8 @@ public class Main {
     }
 }
 */
+
+/*
 class Keyin {
 
     //*******************************
@@ -179,4 +230,4 @@ class Keyin {
         }
     }
 
-}
+}*/

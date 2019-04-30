@@ -30,7 +30,7 @@ public class MyCipher {
     static int KEY_LENGTH = 16;
     static String DEFAULT_KEY = "ASDFGHJKLASDFGHJ";
 
-    public static PrivateKey privateKey ;
+    public static PrivateKey privateKey;
     public static X509Certificate certificate;
 
 
@@ -63,7 +63,7 @@ public class MyCipher {
 
 
 
-    public static byte[] Encrypt(byte[] plainText, String key) throws InvalidCipherTextException {
+    protected static byte[] encrypt(byte[] plainText, String key) throws InvalidCipherTextException {
 
         INPUT_LENGTH  = plainText.length;
         BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESEngine()));
@@ -74,7 +74,7 @@ public class MyCipher {
         return rv;
     }
 
-    public static byte[] Decrypt(byte[] cipherText,String key) throws InvalidCipherTextException{
+    protected static byte[] decrypt(byte[] cipherText, String key) throws InvalidCipherTextException{
 
         BufferedBlockCipher cipher = new PaddedBufferedBlockCipher(new CBCBlockCipher(new AESEngine()));
         cipher.init(false, new KeyParameter(key.getBytes()));
@@ -85,53 +85,26 @@ public class MyCipher {
         return rv;
     }
 
-    public static int decryptFile(File file, String key) throws IOException, InvalidCipherTextException{
+    public static int DecryptFile(File file, String key, String outputfile) throws IOException, InvalidCipherTextException{
         if(file==null || !file.exists())
             return -1;
 
         byte[] encrypteddata = readFile(file);
-        byte[] decrypteddata  = Decrypt(encrypteddata,key);
+        byte[] decrypteddata  = decrypt(encrypteddata,key);
         final String decryptedVal = new String(decrypteddata);
         System.out.println(decryptedVal);
-        return writeFile(file,decrypteddata,".cpt",".xml");
+        return writeFile(decrypteddata,outputfile);
     }
 
-    public static int encryptFile(File file, String key) throws IOException, InvalidCipherTextException{
+    public static int EncryptFile(File file, String key, String outputfile) throws IOException, InvalidCipherTextException{
         if(file==null || !file.exists())
             return -1;
 
-        byte[] encrypteddata = Encrypt(readFile(file),getKey(key));
-        return writeFile(file,encrypteddata,".xml",".cpt");
+        byte[] encrypteddata = encrypt(readFile(file),getKey(key));
+        return writeFile(encrypteddata,outputfile);
     }
 
-    private static String getKey(String key) {
-       return (key!=null && key.length()>0)?key:DEFAULT_KEY;
-    }
-
-
-    public static byte[] readFile(File file) throws IOException {
-        FileInputStream inputStream = new FileInputStream(file);
-        byte[] filedata = new byte[(int)file.length()];
-        inputStream.read(filedata);
-        inputStream.close();
-        return filedata;
-    }
-
-    public static int writeFile(File file, byte[] datatowrite, String oldExtension, String newExtension) throws IOException {
-        if(file==null || !file.exists())
-            return -1;
-
-        FileOutputStream ouptutStream = new FileOutputStream(getFileName(file, oldExtension, newExtension));
-        ouptutStream.write(datatowrite);
-        ouptutStream.close();
-        return 1;
-    }
-
-    public static String getFileName(File file, String oldExtension, String newExtension) {
-        return file.getName().replace(oldExtension,newExtension);
-    }
-
-    public static String getFileChecksum(File file) throws IOException, NoSuchAlgorithmException {
+    public static String GetFileChecksum(File file) throws IOException, NoSuchAlgorithmException {
         FileInputStream inputStream = new FileInputStream(file);
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
@@ -154,11 +127,11 @@ public class MyCipher {
 
     public static String Sign(byte[] bytes, PrivateKey key) throws Exception{
 
-        Signature privateSignature = Signature.getInstance("SHA256WithRSA");
-        privateSignature.initSign(key);
-        privateSignature.update(bytes);
+        Signature protectedSignature = Signature.getInstance("SHA256WithRSA");
+        protectedSignature.initSign(key);
+        protectedSignature.update(bytes);
 
-        byte[] sign = privateSignature.sign();
+        byte[] sign = protectedSignature.sign();
 
         return Base64.getEncoder().encodeToString(sign);
     }
@@ -173,7 +146,7 @@ public class MyCipher {
         return publicSignature.verify(signatureBytes);
     }
 
-    public static KeyPair generateKeyPair() throws Exception {
+    public static KeyPair GenerateKeyPair() throws Exception {
         KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
         generator.initialize(2048,new java.security.SecureRandom());
         KeyPair pair = generator.generateKeyPair();
@@ -181,29 +154,22 @@ public class MyCipher {
         return pair;
     }
 
-    public static SecretKeySpec generateKey() {
-        final SecureRandom random = new SecureRandom();
-        byte[] keyBytes = new byte[KEY_LENGTH];
-        random.engineNextBytes(keyBytes);
-        return new SecretKeySpec(keyBytes, "AES");
-    }
-
-    public static byte[] encryptWithCertX509(byte[] data, X509Certificate encryptionCertificate) throws CertificateEncodingException, CMSException, IOException {
+    public static byte[] EncryptWithCertX509(byte[] data, X509Certificate encryptionCertificate) throws CertificateEncodingException, CMSException, IOException {
 
         byte[] encryptedData = null;
-            if (null != data && null != encryptionCertificate) {
-                CMSEnvelopedDataGenerator cmsEnvelopedDataGenerator = new CMSEnvelopedDataGenerator();
-                JceKeyTransRecipientInfoGenerator jceKey = new JceKeyTransRecipientInfoGenerator(encryptionCertificate);
-                cmsEnvelopedDataGenerator.addRecipientInfoGenerator(jceKey);
-                CMSTypedData msg = new CMSProcessableByteArray(data);
-                OutputEncryptor encryptor = new JceCMSContentEncryptorBuilder(CMSAlgorithm.AES128_CBC).setProvider("BC").build();
-                CMSEnvelopedData cmsEnvelopedData = cmsEnvelopedDataGenerator.generate(msg,encryptor);
-                encryptedData = cmsEnvelopedData.getEncoded();
-            }
+        if (null != data && null != encryptionCertificate) {
+            CMSEnvelopedDataGenerator cmsEnvelopedDataGenerator = new CMSEnvelopedDataGenerator();
+            JceKeyTransRecipientInfoGenerator jceKey = new JceKeyTransRecipientInfoGenerator(encryptionCertificate);
+            cmsEnvelopedDataGenerator.addRecipientInfoGenerator(jceKey);
+            CMSTypedData msg = new CMSProcessableByteArray(data);
+            OutputEncryptor encryptor = new JceCMSContentEncryptorBuilder(CMSAlgorithm.AES128_CBC).setProvider("BC").build();
+            CMSEnvelopedData cmsEnvelopedData = cmsEnvelopedDataGenerator.generate(msg,encryptor);
+            encryptedData = cmsEnvelopedData.getEncoded();
+        }
         return encryptedData;
     }
 
-    public static byte[] decryptWithCertX509(byte[] encryptedData, PrivateKey decryptionKey) throws CMSException {
+    public static byte[] DecryptWithCertX509(byte[] encryptedData, PrivateKey decryptionKey) throws CMSException {
 
         if (null != encryptedData && null != decryptionKey) {
             CMSEnvelopedData envelopedData = new CMSEnvelopedData(encryptedData);
@@ -216,6 +182,38 @@ public class MyCipher {
         }
         return null;
     }
+
+    protected static String getKey(String key) {
+       return (key!=null && key.length()>0)?key:DEFAULT_KEY;
+    }
+
+
+    protected static byte[] readFile(File file) throws IOException {
+        FileInputStream inputStream = new FileInputStream(file);
+        byte[] filedata = new byte[(int)file.length()];
+        inputStream.read(filedata);
+        inputStream.close();
+        return filedata;
+    }
+
+    protected static int writeFile( byte[] datatowrite, String outputfile) throws IOException {
+        if(datatowrite==null || datatowrite.length==0)
+            return -1;
+
+        FileOutputStream ouptutStream = new FileOutputStream(outputfile);
+        ouptutStream.write(datatowrite);
+        ouptutStream.close();
+        return 1;
+    }
+
+
+    public static SecretKeySpec generateKey() {
+        final SecureRandom random = new SecureRandom();
+        byte[] keyBytes = new byte[KEY_LENGTH];
+        random.engineNextBytes(keyBytes);
+        return new SecretKeySpec(keyBytes, "AES");
+    }
+
 
 
 }
