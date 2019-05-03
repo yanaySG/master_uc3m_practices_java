@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 
+
 public class MyCipher {
 
     static int INPUT_LENGTH = 1024;
@@ -93,7 +94,7 @@ public class MyCipher {
         byte[] decrypteddata  = decrypt(encrypteddata,key);
         final String decryptedVal = new String(decrypteddata);
         System.out.println(decryptedVal);
-        return writeFile(decrypteddata,outputfile);
+        return writeFile(decrypteddata,new File(outputfile));
     }
 
     public static int EncryptFile(File file, String key, String outputfile) throws IOException, InvalidCipherTextException{
@@ -101,14 +102,15 @@ public class MyCipher {
             return -1;
 
         byte[] encrypteddata = encrypt(readFile(file),getKey(key));
-        return writeFile(encrypteddata,outputfile);
+        return writeFile(encrypteddata,new File(outputfile));
     }
 
-    public static String GetFileChecksum(File file) throws IOException, NoSuchAlgorithmException {
-        FileInputStream inputStream = new FileInputStream(file);
+    public static int GetFileChecksum(File inputfile, File addfile) throws IOException, NoSuchAlgorithmException {
+        int res = 0;
+        FileInputStream inputStream = new FileInputStream(inputfile);
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
 
-        byte[] byteArray = new byte[(int)file.length()];
+        byte[] byteArray = new byte[(int)inputfile.length()];
         int bytesCount;
 
         while ((bytesCount = inputStream.read(byteArray))!= -1){
@@ -122,10 +124,21 @@ public class MyCipher {
         StringBuilder sb = new StringBuilder();
         for (byte aByte : bytes) sb.append(Integer.toString((aByte & 0xFF) + 0X100, 16).substring(1));
 
-        return sb.toString();
+        res = writeFile(sb.toString().getBytes(),addfile);
+        return res;
     }
 
-    public static String Sign(byte[] bytes, PrivateKey key) throws Exception{
+    public static int VerifyFileChecksum(File file, String hash, File addfile) throws IOException, NoSuchAlgorithmException {
+
+        if(GetFileChecksum(file, addfile)==0)
+            return 0;
+
+        byte[] filetocheck = readFile(file);
+        boolean res=  Arrays.equals(filetocheck,hash.getBytes());
+        return (res)? 1: 0;
+    }
+
+    public static String SignFileInfo(byte[] bytes, PrivateKey key) throws Exception{
 
         Signature protectedSignature = Signature.getInstance("SHA256WithRSA");
         protectedSignature.initSign(key);
@@ -133,10 +146,14 @@ public class MyCipher {
 
         byte[] sign = protectedSignature.sign();
 
+        return encodeBytes(sign);
+    }
+
+    protected static String encodeBytes(byte[] sign) {
         return Base64.getEncoder().encodeToString(sign);
     }
 
-    public static boolean Verify(byte[] bytes, String signature, PublicKey key) throws Exception{
+    public static boolean VerifyFileSignature(byte[] bytes, String signature, PublicKey key) throws Exception{
 
         Signature publicSignature = Signature.getInstance("SHA256WithRSA");
         publicSignature.initVerify(key);
@@ -146,6 +163,11 @@ public class MyCipher {
         return publicSignature.verify(signatureBytes);
     }
 
+
+    /**
+     * @return
+     * @throws Exception
+     */
     public static KeyPair GenerateKeyPair() throws Exception {
         KeyPairGenerator generator = KeyPairGenerator.getInstance("RSA");
         generator.initialize(2048,new java.security.SecureRandom());
@@ -196,7 +218,7 @@ public class MyCipher {
         return filedata;
     }
 
-    protected static int writeFile( byte[] datatowrite, String outputfile) throws IOException {
+    protected static int writeFile( byte[] datatowrite, File outputfile) throws IOException {
         if(datatowrite==null || datatowrite.length==0)
             return -1;
 

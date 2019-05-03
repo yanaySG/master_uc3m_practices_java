@@ -4,6 +4,7 @@ import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 import java.io.File;
+import java.util.Map;
 
 
 public class Main {
@@ -11,33 +12,42 @@ public class Main {
         se,sd,hf,hv,ae,ad,cc
     }
 
-    static String infile = "transaction.xml";
-    static String outfile = "transaction.cpt";
 
-    public static void main(String[] args) throws Exception{
+    public static int main(String[] args) throws Exception{
 
-
+        // initializing args parser
         ArgumentParser parser = initArgParserHelper();
+
+        // processing args
         Namespace ns = processArgs(args,parser);
 
-        String mode = ns.getString("mode");
+        if(ns==null) return 0;
+        int res = 0 ;
+        String hash ="";
 
-        infile = ns.getString("infile");
-        outfile = ns.getString("outfile");
+        // fetching  args values
+        final String mode = (ns.getString("mode")!= null)?ns.getString("mode"):"se";
+        final String infile = (ns.getString("i")!= null)?ns.getString("i"):"transaction.xml";
+        final String outfile = (ns.getString("o")!= null)?ns.getString("o"):"transaction.cpt";
+        final String password = (ns.getString("p")!= null)?ns.getString("p"):"MYSECUREPASSWORD";
+        final String addfile = (ns.getString("ad")!= null)?ns.getString("ad"):"addfile.txt";
 
+        // executing MyCipher operations given a mode value from the args
         switch( MODE.valueOf( mode ) ) {
             case se:
-                System.out.println( "## Symmetric encryption" );
-                MyCipher.EncryptFile(new File(infile),ns.getString("password"),outfile);
+                res = MyCipher.EncryptFile(new File(infile),password,outfile);
+                System.out.println( "## Symmetric encryption completed!" );
                 break;
             case sd:
-                System.out.println( "## Symmetric decryption" );
-                MyCipher.DecryptFile(new File(infile),ns.getString("password"),outfile);
+                res = MyCipher.DecryptFile(new File(infile),password,outfile);
+                System.out.println( "## Symmetric decryption completed" );
                 break;
             case hf:
-                System.out.println( "## Hash function" );
+                res = MyCipher.GetFileChecksum(new File(infile), new File(addfile));
+                System.out.println( "## Hash function completed" );
                 break;
             case hv:
+                res = MyCipher.VerifyFileChecksum(new File(infile), hash, new File(addfile));
                 System.out.println( "## Hash verification" );
                 break;
             case ae:
@@ -54,7 +64,7 @@ public class Main {
                 break;
         }
 
-
+    return res;
 /*
         MessageDigest digest = null;
         try {
@@ -101,7 +111,6 @@ public class Main {
             ns = parser.parseArgs(args);
         } catch (ArgumentParserException e) {
             parser.handleError(e);
-            System.exit(1);
         }
 
         return ns;
@@ -131,6 +140,8 @@ public class Main {
                 .help("Input file ");
         parser.addArgument("-o", "-outfile").type(File.class).metavar("FILE")
                 .help("Output file.");
+        parser.addArgument("-ad", "-addfile").type(File.class).metavar("FILE")
+                .help("Additional file.");
         return parser;
     }
 
