@@ -55,7 +55,6 @@ class MainTest {
     @Test
     void testH_MainSymmetricEncryptionDecryptionWithValidPassword() throws Exception {
 
-
         // reading raw data from transaction.xml
         String hash_raw=  MyCipher.encodeBytes(MyCipher.readFile(new File(filename)));
 
